@@ -1,4 +1,16 @@
-import { Controller, Get, Post, Body, Patch, Param, Delete,  HttpStatus, UseGuards, UseInterceptors, ClassSerializerInterceptor } from '@nestjs/common';
+import {
+  Controller,
+  Get,
+  Post,
+  Body,
+  Patch,
+  Param,
+  Delete,
+  HttpStatus,
+  UseGuards,
+  UseInterceptors,
+  ClassSerializerInterceptor,
+} from '@nestjs/common';
 import { AppUsersService } from './app-users.service';
 import CreateAppUserDto from './dto/requests/create-app-user.dto';
 import AppUser from './entities/app-user.entity';
@@ -18,11 +30,9 @@ export class AppUsersController {
   async create(@Body() createAppUserDto: CreateAppUserDto) {
     return await this.appUsersService.create(createAppUserDto);
   }
-  
+
   @HasRoles(RoleType.Admin)
-  @UseGuards(
-    AuthGuard('jwt'), 
-    RolesGuard) 
+  @UseGuards(AuthGuard('jwt'), RolesGuard)
   @ApiBearerAuth()
   @UseInterceptors(ClassSerializerInterceptor)
   @Get()
@@ -33,25 +43,43 @@ export class AppUsersController {
   @UseInterceptors(ClassSerializerInterceptor)
   @Get(':id')
   async findOne(@Param('id') id: string) {
-    const result : AppUser | string = await this.appUsersService.findOne(+id);
-    const status : HttpStatus = (typeof(result) == 'string') ? HttpStatus.NOT_FOUND : HttpStatus.OK;
+    const result: AppUser | string = await this.appUsersService.findOne(+id);
+    const status: HttpStatus =
+      typeof result == 'string' ? HttpStatus.NOT_FOUND : HttpStatus.OK;
     return {
       status: status,
-      response: result
+      response: result,
     };
   }
 
   @Patch(':id')
-  async update(@Param('id') id: string, @Body() updateAppUserDto: UpdateAppUserDto) {
-    const result : string = await this.appUsersService.update(+id, updateAppUserDto);
-    const status : HttpStatus = ((result).includes('wrong')) ? HttpStatus.BAD_REQUEST : HttpStatus.OK; 
+  async update(
+    @Param('id') id: string,
+    @Body() updateAppUserDto: UpdateAppUserDto,
+  ) {
+    const result: string = await this.appUsersService.update(
+      +id,
+      updateAppUserDto,
+    );
+    const status: HttpStatus = result.includes('wrong')
+      ? HttpStatus.BAD_REQUEST
+      : HttpStatus.OK;
     return `${status} ${result}`;
   }
 
   @Post('addContactInfo/:id')
-  async addContactInfo(@Param('id') id: string, @Body() createContactInfoDto: CreateContactInfoDto) {
-    const result : string = await this.appUsersService.addNewContactInfoOnAppUser(+id, createContactInfoDto);
-    const status : HttpStatus = ((result).includes('wrong')) ? HttpStatus.BAD_REQUEST : HttpStatus.OK; 
+  async addContactInfo(
+    @Param('id') id: string,
+    @Body() createContactInfoDto: CreateContactInfoDto,
+  ) {
+    const result: string =
+      await this.appUsersService.addNewContactInfoOnAppUser(
+        +id,
+        createContactInfoDto,
+      );
+    const status: HttpStatus = result.includes('wrong')
+      ? HttpStatus.BAD_REQUEST
+      : HttpStatus.OK;
     return `${status} ${result}`;
   }
 

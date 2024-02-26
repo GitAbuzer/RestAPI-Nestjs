@@ -1,4 +1,13 @@
-import { Controller, Get, Post, Body, Patch, Param, Delete, HttpCode, HttpStatus } from '@nestjs/common';
+import {
+  Controller,
+  Get,
+  Post,
+  Body,
+  Patch,
+  Param,
+  Delete,
+  HttpStatus,
+} from '@nestjs/common';
 import { AddressesService } from './addresses.service';
 import { CreateAddressDto } from './dto/requests/create-address.dto';
 import { UpdateAddressDto } from './dto/requests/update.address.dto';
@@ -20,18 +29,27 @@ export class AddressesController {
 
   @Get(':id')
   async findOne(@Param('id') id: string) {
-    const result : Address | string = await this.addressesService.findOne(+id);
-    const status : HttpStatus = (typeof(result) == 'string') ? HttpStatus.NOT_FOUND : HttpStatus.OK;
+    const result: Address | string = await this.addressesService.findOne(+id);
+    const status: HttpStatus =
+      typeof result == 'string' ? HttpStatus.NOT_FOUND : HttpStatus.OK;
     return {
       status: status,
-      response: result
+      response: result,
     };
   }
 
   @Patch(':id')
-  async update(@Param('id') id: string, @Body() updateAddressDto: UpdateAddressDto) {
-    const result : string = await this.addressesService.update(+id, updateAddressDto);
-    const status : HttpStatus = ((result).includes('wrong')) ? HttpStatus.BAD_REQUEST : HttpStatus.OK; 
+  async update(
+    @Param('id') id: string,
+    @Body() updateAddressDto: UpdateAddressDto,
+  ) {
+    const result: string = await this.addressesService.update(
+      +id,
+      updateAddressDto,
+    );
+    const status: HttpStatus = result.includes('wrong')
+      ? HttpStatus.BAD_REQUEST
+      : HttpStatus.OK;
     return `${status} ${result}`;
   }
 

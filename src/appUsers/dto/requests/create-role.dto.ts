@@ -1,4 +1,4 @@
-import { ApiProperty } from "@nestjs/swagger";
+import { ApiProperty } from '@nestjs/swagger';
 
 enum RoleType {
   Admin = 'admin',
@@ -6,19 +6,17 @@ enum RoleType {
   Engineer = 'engineer',
   Formen = 'formen',
   Worker = 'worker',
-  User = 'user'
+  User = 'user',
 }
 
 export class CreateRoleDto {
-  
   @ApiProperty({
     enum: RoleType,
     isArray: false,
-    example: "admin" 
+    example: 'admin',
   })
-    title: RoleType
+  title: RoleType;
 
   @ApiProperty()
-    description: string
+  description: string;
 }
-

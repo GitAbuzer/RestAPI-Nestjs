@@ -1,59 +1,57 @@
-import AppUser from "src/appUsers/entities/app-user.entity";
-import { 
-  Column, 
-  CreateDateColumn, 
-  Entity, 
-  JoinColumn, 
-  ManyToOne, 
-  PrimaryGeneratedColumn, 
-  RelationId,
-  UpdateDateColumn} from "typeorm";
-  
+import AppUser from 'src/appUsers/entities/app-user.entity';
+import {
+  Column,
+  CreateDateColumn,
+  Entity,
+  ManyToOne,
+  PrimaryGeneratedColumn,
+  UpdateDateColumn,
+} from 'typeorm';
+
 @Entity()
 export class Address {
   @PrimaryGeneratedColumn()
-    id: number
-  
-  @Column()
-    type: string
+  id: number;
 
   @Column()
-    title: string
+  type: string;
 
   @Column()
-    addressOne: string
-  
-  @Column()
-    addressTwo: string
-    
-  @Column()
-    country: string
+  title: string;
 
   @Column()
-    county: string
-  
-  @Column()
-    city: string
-  
-  @Column()
-    zipCode: string
+  addressOne: string;
 
-  @Column( {
-    default: true
-  } )
-    isActive: boolean
-    
+  @Column()
+  addressTwo: string;
+
+  @Column()
+  country: string;
+
+  @Column()
+  county: string;
+
+  @Column()
+  city: string;
+
+  @Column()
+  zipCode: string;
+
+  @Column({
+    default: true,
+  })
+  isActive: boolean;
+
   @CreateDateColumn()
-    createdDate: Date
+  createdDate: Date;
 
   @UpdateDateColumn()
-    updateDate: Date
+  updateDate: Date;
 
   @ManyToOne(() => AppUser, (appUser) => appUser.addresses, {
     orphanedRowAction: 'delete',
     onDelete: 'CASCADE',
     onUpdate: 'CASCADE',
   })
-    appUser: AppUser
-    
+  appUser: AppUser;
 }

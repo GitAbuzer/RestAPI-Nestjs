@@ -3,8 +3,8 @@ import { CreateItemDto } from './create-item.dto';
 import { ApiProperty } from '@nestjs/swagger';
 
 export class UpdateItemDto extends PartialType(CreateItemDto) {
-  @ApiProperty( {
-    default: true
-  } )
-    isActive: boolean
+  @ApiProperty({
+    default: true,
+  })
+  isActive: boolean;
 }

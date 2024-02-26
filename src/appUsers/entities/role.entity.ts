@@ -1,5 +1,12 @@
-import { Column, CreateDateColumn, Entity, ManyToOne, PrimaryGeneratedColumn, UpdateDateColumn } from "typeorm";
-import AppUser from "./app-user.entity";
+import {
+  Column,
+  CreateDateColumn,
+  Entity,
+  ManyToOne,
+  PrimaryGeneratedColumn,
+  UpdateDateColumn,
+} from 'typeorm';
+import AppUser from './app-user.entity';
 
 export enum RoleType {
   Admin = 'admin',
@@ -7,37 +14,35 @@ export enum RoleType {
   Engineer = 'engineer',
   Formen = 'formen',
   Worker = 'worker',
-  User = 'user'
+  User = 'user',
 }
 
 @Entity()
 export class Role {
   @PrimaryGeneratedColumn()
-    id: number
-  
+  id: number;
+
   @Column({
     type: 'enum',
     enum: RoleType,
-    default: RoleType.User
+    default: RoleType.User,
   })
-    title: RoleType
+  title: RoleType;
 
-  @Column( {
-    default: true
-  } )
-    isActive: boolean
-    
+  @Column({
+    default: true,
+  })
+  isActive: boolean;
+
   @CreateDateColumn()
-    createdDate: Date
+  createdDate: Date;
 
   @UpdateDateColumn()
-    updateDate: Date
+  updateDate: Date;
 
   @Column()
-    description: string
+  description: string;
 
-  @ManyToOne(() => AppUser, appUser => appUser.roles)
-    appUser: AppUser
-  
+  @ManyToOne(() => AppUser, (appUser) => appUser.roles)
+  appUser: AppUser;
 }
-

@@ -19,7 +19,7 @@ import { TasksModule } from './tasks/tasks.module';
     AddressesModule,
     ProfilesModule,
     AuthModule,
-    TypeOrmModule.forRoot( {
+    TypeOrmModule.forRoot({
       type: 'postgres',
       host: 'localhost',
       port: 5432,
@@ -27,8 +27,8 @@ import { TasksModule } from './tasks/tasks.module';
       password: 'B@yram&',
       database: 'test',
       autoLoadEntities: true,
-      synchronize: true
-    } )
+      synchronize: true,
+    }),
   ],
   controllers: [AppController],
   providers: [AppService],

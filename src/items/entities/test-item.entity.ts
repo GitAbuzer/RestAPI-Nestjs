@@ -1,19 +1,13 @@
-import { 
-  Entity, 
-  PrimaryGeneratedColumn, 
-  Column } from 'typeorm';
+import { Entity, PrimaryGeneratedColumn, Column } from 'typeorm';
 
 @Entity()
 export default class TestItem {
-
   @PrimaryGeneratedColumn()
-    id: number;
+  id: number;
 
   @Column()
-    name: string;
-   
+  name: string;
+
   @Column()
-    description: string;
-
-
+  description: string;
 }

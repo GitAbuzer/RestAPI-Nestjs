@@ -1,41 +1,48 @@
-import AppUser from "src/appUsers/entities/app-user.entity";
-import { Column, CreateDateColumn, Entity, ManyToOne, OneToOne, PrimaryGeneratedColumn, UpdateDateColumn } from "typeorm";
+import AppUser from 'src/appUsers/entities/app-user.entity';
+import {
+  Column,
+  CreateDateColumn,
+  Entity,
+  ManyToOne,
+  OneToOne,
+  PrimaryGeneratedColumn,
+  UpdateDateColumn,
+} from 'typeorm';
 
 @Entity()
 export class Task {
   @PrimaryGeneratedColumn()
-    id: number
-  
-  @Column()
-    title: string
+  id: number;
 
   @Column()
-    description: string
+  title: string;
 
   @Column()
-    isDone: boolean
+  description: string;
 
-  @Column( {
-    default: true
-  } )
-    isActive: boolean
-    
+  @Column()
+  isDone: boolean;
+
+  @Column({
+    default: true,
+  })
+  isActive: boolean;
+
   @CreateDateColumn()
-    createdDate: Date
+  createdDate: Date;
 
   @UpdateDateColumn()
-    updateDate: Date
+  updateDate: Date;
 
   @Column()
-    dueDate: Date
+  dueDate: Date;
 
-  @OneToOne(()  => AppUser)
-    creator: AppUser
+  @OneToOne(() => AppUser)
+  creator: AppUser;
 
-  @Column({type: "varchar", length: 4000})
-    image: string
+  @Column({ type: 'varchar', length: 4000 })
+  image: string;
 
-  @ManyToOne(() => AppUser, appUser => appUser.tasks)
-    appUser: AppUser
-
+  @ManyToOne(() => AppUser, (appUser) => appUser.tasks)
+  appUser: AppUser;
 }

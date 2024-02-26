@@ -1,4 +1,4 @@
-import { Module, forwardRef } from '@nestjs/common';
+import { Module } from '@nestjs/common';
 import { TypeOrmModule } from '@nestjs/typeorm';
 import { Address } from 'src/addresses/entities/address.entity';
 import AppUser from 'src/appUsers/entities/app-user.entity';
@@ -12,14 +12,17 @@ import { AppUsersService } from './app-users.service';
 
 @Module({
   controllers: [AppUsersController],
-  providers: [ AppUsersService ],
-  imports: [TypeOrmModule.forFeature([
-    AppUser, 
-    Address, 
-    Profile, 
-    Role, 
-    ContactInfo, 
-    Task, 
-    Team])],
+  providers: [AppUsersService],
+  imports: [
+    TypeOrmModule.forFeature([
+      AppUser,
+      Address,
+      Profile,
+      Role,
+      ContactInfo,
+      Task,
+      Team,
+    ]),
+  ],
 })
 export class AppUsersModule {}

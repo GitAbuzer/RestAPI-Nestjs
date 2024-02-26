@@ -1,4 +1,13 @@
-import { Controller, Get, Post, Body, Patch, Param, Delete, HttpCode, HttpStatus } from '@nestjs/common';
+import {
+  Controller,
+  Get,
+  Post,
+  Body,
+  Patch,
+  Param,
+  Delete,
+  HttpStatus,
+} from '@nestjs/common';
 import { ItemsService } from './items.service';
 import { CreateItemDto } from './dto/create-item.dto';
 import { UpdateItemDto } from './dto/update-item.dto';
@@ -20,18 +29,21 @@ export class ItemsController {
 
   @Get(':id')
   async findOne(@Param('id') id: string) {
-    const result : TestItem | string = await this.itemsService.findOne(+id);
-    const status : HttpStatus = (typeof(result) == 'string') ? HttpStatus.NOT_FOUND : HttpStatus.OK;
+    const result: TestItem | string = await this.itemsService.findOne(+id);
+    const status: HttpStatus =
+      typeof result == 'string' ? HttpStatus.NOT_FOUND : HttpStatus.OK;
     return {
       status: status,
-      response: result
+      response: result,
     };
   }
 
   @Patch(':id')
   async update(@Param('id') id: string, @Body() updateItemDto: UpdateItemDto) {
-    const result : string = await this.itemsService.update(+id, updateItemDto);
-    const status : HttpStatus = ((result).includes('wrong')) ? HttpStatus.BAD_REQUEST : HttpStatus.OK; 
+    const result: string = await this.itemsService.update(+id, updateItemDto);
+    const status: HttpStatus = result.includes('wrong')
+      ? HttpStatus.BAD_REQUEST
+      : HttpStatus.OK;
     return `${status} ${result}`;
   }
 

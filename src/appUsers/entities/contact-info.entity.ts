@@ -1,34 +1,41 @@
-import { Column, CreateDateColumn, Entity, ManyToOne, PrimaryGeneratedColumn, UpdateDateColumn } from "typeorm";
-import AppUser from "./app-user.entity";
+import {
+  Column,
+  CreateDateColumn,
+  Entity,
+  ManyToOne,
+  PrimaryGeneratedColumn,
+  UpdateDateColumn,
+} from 'typeorm';
+import AppUser from './app-user.entity';
 
 @Entity()
 export class ContactInfo {
   @PrimaryGeneratedColumn()
-    id: number
-  
-  @Column()
-    type: string
-  
-  @Column()
-    isPrimary: boolean
+  id: number;
 
   @Column()
-    title: string
-  
+  type: string;
+
   @Column()
-    info: string
+  isPrimary: boolean;
 
-  @ManyToOne(() => AppUser, appUser => appUser.contactInfos)
-    appUser: AppUser
+  @Column()
+  title: string;
 
-  @Column( {
-    default: true
-  } )
-    isActive: boolean
-    
+  @Column()
+  info: string;
+
+  @ManyToOne(() => AppUser, (appUser) => appUser.contactInfos)
+  appUser: AppUser;
+
+  @Column({
+    default: true,
+  })
+  isActive: boolean;
+
   @CreateDateColumn()
-    createdDate: Date
+  createdDate: Date;
 
   @UpdateDateColumn()
-    updateDate: Date
+  updateDate: Date;
 }

@@ -18,6 +18,6 @@ import { JwtStrategy } from './jwt.strategy';
       secret: jwtConstants.secret,
       signOptions: { expiresIn: '8h' },
     }),
-  ]
+  ],
 })
 export class AuthModule {}

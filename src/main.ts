@@ -8,24 +8,24 @@ import { CreateProfileDto } from './profiles/dto/create-profile.dto';
 
 async function bootstrap() {
   const app = await NestFactory.create(AppModule, { cors: true });
-  
+
   const config = new DocumentBuilder()
-  .setTitle('Nestjs REST-API example')
-  .setDescription('Nestjs REST-API description')
-  .setVersion('1.0')
-  .addTag('Nestjs REST-API')
-  .addBearerAuth()
-  .build();
-  
+    .setTitle('Nestjs REST-API example')
+    .setDescription('Nestjs REST-API description')
+    .setVersion('1.0')
+    .addTag('Nestjs REST-API')
+    .addBearerAuth()
+    .build();
+
   const document = SwaggerModule.createDocument(app, config, {
-    extraModels: [ 
-      CreateAddressDto, 
-      CreateAppUserDto, 
+    extraModels: [
+      CreateAddressDto,
+      CreateAppUserDto,
       CreateContactInfoDto,
       CreateProfileDto,
-     ]
+    ],
   });
-  
+
   SwaggerModule.setup('api', app, document);
 
   app.enableCors();
