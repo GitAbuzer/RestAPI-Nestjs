@@ -40,9 +40,9 @@ export class Task {
   @OneToOne(() => AppUser)
   creator: AppUser;
 
-  @Column({ type: 'varchar', length: 4000 })
+  @Column({ type: 'varchar', length: 4000, nullable: true })
   image: string;
 
   @ManyToOne(() => AppUser, (appUser) => appUser.tasks)
-  appUser: AppUser;
+  worker: AppUser;
 }

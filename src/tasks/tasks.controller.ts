@@ -11,7 +11,7 @@ import {
 import { TasksService } from './tasks.service';
 import { CreateTaskDto } from './dto/create-task.dto';
 import { Task } from './entities/task.entity';
-import { UpdateProfileDto } from 'src/profiles/dto/update-profile.dto';
+import { UpdateTaskDto } from './dto/update-task.dto';
 
 @Controller('tasks')
 export class TasksController {
@@ -39,14 +39,8 @@ export class TasksController {
   }
 
   @Patch(':id')
-  async update(
-    @Param('id') id: string,
-    @Body() updateProfileDto: UpdateProfileDto,
-  ) {
-    const result: string = await this.tasksService.update(
-      +id,
-      updateProfileDto,
-    );
+  async update(@Param('id') id: string, @Body() updateTaskDto: UpdateTaskDto) {
+    const result: string = await this.tasksService.update(+id, updateTaskDto);
     const status: HttpStatus = result.includes('wrong')
       ? HttpStatus.BAD_REQUEST
       : HttpStatus.OK;

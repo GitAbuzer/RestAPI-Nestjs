@@ -19,7 +19,35 @@ export class TasksService {
   ) {}
 
   async create(createTaskDto: CreateTaskDto): Promise<string> {
-    const result: Task = await this.tasksRepository.save(createTaskDto);
+    const creator: AppUser = (
+      await this.appUserRepository.find({
+        where: { id: createTaskDto.creatorId },
+        //relations: { roles: true }
+      })
+    ).at(0);
+    const entity: Task = await this.tasksRepository.create(createTaskDto);
+    entity.creator = creator;
+    if (createTaskDto.contributorId) {
+      const contributor: AppUser = (
+        await this.appUserRepository.find({
+          where: { id: createTaskDto.contributorId },
+        })
+      ).at(0);
+      entity.worker = contributor;
+    }
+    if (createTaskDto.teamId) {
+      const team: Team = (
+        await this.teamsRepository.find({
+          where: { id: createTaskDto.teamId },
+          relations: {
+            tasks: true,
+          },
+        })
+      ).at(0);
+      team.tasks.push(entity);
+    }
+
+    const result: Task = await this.tasksRepository.save(entity);
     return `${result.id} is created successfully!`;
   }
 
@@ -61,7 +89,7 @@ export class TasksService {
 
     if (appUser === null) return `${appUserId} could not found!`;
 
-    result.appUser = appUser;
+    result.worker = appUser;
 
     appUser.tasks.push(result);
     await this.appUserRepository.save(appUser);
