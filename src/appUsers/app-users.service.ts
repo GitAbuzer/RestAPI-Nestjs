@@ -24,18 +24,28 @@ export class AppUsersService {
   ) {}
 
   async create(createAppUserDto: CreateAppUserDto): Promise<object | any> {
+    const isExist: boolean = await this.appUserRepository.exists({
+      where: { username: createAppUserDto.username },
+    });
     const sha256Password = createHash('sha256')
       .update(createAppUserDto.password)
       .digest('base64');
     createAppUserDto.password = sha256Password;
+    if (isExist) {
+      return {
+        message: `${createAppUserDto.username} has already exists!`,
+        success: false,
+      };
+    }
 
     const result: AppUser = await this.appUserRepository.save(createAppUserDto);
     await this.addContactInfoOnUser(createAppUserDto.contactInfo, result);
     await this.addRoleOnUser(createAppUserDto.role, result);
 
     return {
-      message: `${result.id} is created successfully!`,
+      message: `${result.username} is created successfully!`,
       appUserId: result.id,
+      success: true,
     };
   }
 

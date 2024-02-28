@@ -1,8 +1,10 @@
 import AppUser from 'src/appUsers/entities/app-user.entity';
+import { Team } from 'src/teams/entities/team.entity';
 import {
   Column,
   CreateDateColumn,
   Entity,
+  ManyToMany,
   ManyToOne,
   OneToOne,
   PrimaryGeneratedColumn,
@@ -45,4 +47,7 @@ export class Task {
 
   @ManyToOne(() => AppUser, (appUser) => appUser.tasks)
   worker: AppUser;
+
+  @ManyToMany(() => Team, (team) => team.tasks)
+  teams: Team[];
 }

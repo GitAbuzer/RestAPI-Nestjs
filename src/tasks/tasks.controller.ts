@@ -7,11 +7,13 @@ import {
   Param,
   Delete,
   HttpStatus,
+  Query,
 } from '@nestjs/common';
 import { TasksService } from './tasks.service';
 import { CreateTaskDto } from './dto/create-task.dto';
 import { Task } from './entities/task.entity';
 import { UpdateTaskDto } from './dto/update-task.dto';
+import { TaskQueryParamsDto } from './dto/task-query-params.dto';
 
 @Controller('tasks')
 export class TasksController {
@@ -25,6 +27,13 @@ export class TasksController {
   @Get()
   async findAll() {
     return await this.tasksService.findAll();
+  }
+
+  @Get('getBy')
+  async findAllByWorkerId(@Query() params: TaskQueryParamsDto) {
+    return params.workerId
+      ? await this.tasksService.findByWorkerId(params.workerId)
+      : await this.tasksService.findByTeam(params.teamId);
   }
 
   @Get(':id')
