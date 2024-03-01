@@ -1,8 +1,10 @@
 import AppUser from 'src/appUsers/entities/app-user.entity';
+import { Team } from 'src/teams/entities/team.entity';
 import {
   Column,
   CreateDateColumn,
   Entity,
+  ManyToMany,
   ManyToOne,
   OneToOne,
   PrimaryGeneratedColumn,
@@ -40,9 +42,12 @@ export class Task {
   @OneToOne(() => AppUser)
   creator: AppUser;
 
-  @Column({ type: 'varchar', length: 4000 })
+  @Column({ type: 'varchar', length: 4000, nullable: true })
   image: string;
 
   @ManyToOne(() => AppUser, (appUser) => appUser.tasks)
-  appUser: AppUser;
+  worker: AppUser;
+
+  @ManyToMany(() => Team, (team) => team.tasks)
+  teams: Team[];
 }

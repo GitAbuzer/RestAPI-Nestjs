@@ -77,7 +77,7 @@ export default class AppUser {
   })
   addresses: Address[];
 
-  @OneToMany(() => Task, (tasks) => tasks.appUser)
+  @OneToMany(() => Task, (tasks) => tasks.worker)
   tasks: Task[];
 
   @ManyToMany(() => Team, (team) => team.members)

@@ -1,3 +1,6 @@
+#pgdata folder
+/pgdata
+
 # compiled output
 /dist
 /node_modules

@@ -8,10 +8,10 @@ import {
   Delete,
   HttpStatus,
 } from '@nestjs/common';
-import { Profile } from './entities/Profile.entity';
 import { ProfilesService } from './profile.service';
 import { CreateProfileDto } from './dto/create-profile.dto';
 import { UpdateProfileDto } from './dto/update-profile.dto';
+import { Profile } from 'src/profiles/entities/profile.entity';
 
 @Controller('profiles')
 export class ProfilesController {

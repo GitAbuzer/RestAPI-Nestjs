@@ -7,11 +7,13 @@ import {
   Param,
   Delete,
   HttpStatus,
+  Query,
 } from '@nestjs/common';
 import { TasksService } from './tasks.service';
 import { CreateTaskDto } from './dto/create-task.dto';
 import { Task } from './entities/task.entity';
-import { UpdateProfileDto } from 'src/profiles/dto/update-profile.dto';
+import { UpdateTaskDto } from './dto/update-task.dto';
+import { TaskQueryParamsDto } from './dto/task-query-params.dto';
 
 @Controller('tasks')
 export class TasksController {
@@ -27,6 +29,13 @@ export class TasksController {
     return await this.tasksService.findAll();
   }
 
+  @Get('getBy')
+  async findAllByWorkerId(@Query() params: TaskQueryParamsDto) {
+    return params.workerId
+      ? await this.tasksService.findByWorkerId(params.workerId)
+      : await this.tasksService.findByTeam(params.teamId);
+  }
+
   @Get(':id')
   async findOne(@Param('id') id: string) {
     const result: Task | string = await this.tasksService.findOne(+id);
@@ -39,14 +48,8 @@ export class TasksController {
   }
 
   @Patch(':id')
-  async update(
-    @Param('id') id: string,
-    @Body() updateProfileDto: UpdateProfileDto,
-  ) {
-    const result: string = await this.tasksService.update(
-      +id,
-      updateProfileDto,
-    );
+  async update(@Param('id') id: string, @Body() updateTaskDto: UpdateTaskDto) {
+    const result: string = await this.tasksService.update(+id, updateTaskDto);
     const status: HttpStatus = result.includes('wrong')
       ? HttpStatus.BAD_REQUEST
       : HttpStatus.OK;

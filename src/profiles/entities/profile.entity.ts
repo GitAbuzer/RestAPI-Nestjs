@@ -16,7 +16,9 @@ export class Profile {
   @Column()
   gender: string;
 
-  @Column()
+  @Column('varchar', {
+    default: 'https://static.thenounproject.com/png/5034901-200.png',
+  })
   photo: string;
 
   @OneToOne(() => AppUser, (appUser) => appUser.profile) // specify inverse side as a second parameter

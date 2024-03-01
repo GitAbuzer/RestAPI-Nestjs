@@ -21,8 +21,16 @@ export class Team {
   @Column()
   description: string;
 
-  @ManyToMany(() => Task)
-  @JoinTable()
+  @ManyToMany(() => Task, (task) => task.teams, {
+    cascade: true,
+    onDelete: 'CASCADE',
+    onUpdate: 'CASCADE',
+  })
+  @JoinTable({
+    name: 'team_tasks_task',
+    joinColumn: { name: 'teamId', referencedColumnName: 'id' },
+    inverseJoinColumn: { name: 'taskId', referencedColumnName: 'id' },
+  })
   tasks: Task[];
 
   @CreateDateColumn()
