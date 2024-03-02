@@ -43,6 +43,9 @@ $ npm run start:dev
 
 # production mode
 $ npm run start:prod
+
+# dockerize
+$ docker-compose up --build
 ```
 
 ## Test
@@ -56,9 +59,6 @@ $ npm run test:e2e
 
 # test coverage
 $ npm run test:cov
-
-# dockerize
-$ docker-compose up --build
 ```
 
 ## Support
