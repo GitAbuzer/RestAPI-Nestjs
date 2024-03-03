@@ -9,10 +9,11 @@ import { Task } from 'src/tasks/entities/task.entity';
 import { Team } from 'src/teams/entities/team.entity';
 import { AppUsersController } from './app-users.controller';
 import { AppUsersService } from './app-users.service';
+import { MailerService } from 'src/mailer/mailer.service';
 
 @Module({
   controllers: [AppUsersController],
-  providers: [AppUsersService],
+  providers: [AppUsersService, MailerService],
   imports: [
     TypeOrmModule.forFeature([
       AppUser,

@@ -12,13 +12,13 @@ export type SendEmailDto = {
 
 @Injectable()
 export class AppService {
-  constructor(private readonly mailerService: MailerService) {}
+  //constructor(private readonly mailerService: MailerService) {}
 
   getHello(): string {
-    return 'Hello World! hehehello world';
+    return 'Hello World!';
   }
 
-  async sendEmail(dto: SendEmailDto) {
+/*   async sendEmail(dto: SendEmailDto) {
     const { recipients, subject, text, html } = dto;
 
     const sender: string | Address = dto.sender || {
@@ -37,5 +37,5 @@ export class AppService {
     } catch (error) {
       throw new Error(error);
     }
-  }
+  } */
 }

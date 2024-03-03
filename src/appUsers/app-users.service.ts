@@ -9,6 +9,9 @@ import { Role } from './entities/role.entity';
 import { CreateRoleDto } from './dto/requests/create-role.dto';
 import { CreateContactInfoDto } from './dto/requests/create-contact-info.dto';
 import { createHash } from 'crypto';
+import { SendEmailInterface } from 'src/mailer/mail.interface';
+import { EmailBody } from 'src/mailer/mailer.controller';
+import { MailerService } from 'src/mailer/mailer.service';
 
 @Injectable()
 export class AppUsersService {
@@ -19,6 +22,7 @@ export class AppUsersService {
     private readonly contactInfoRepository: Repository<ContactInfo>,
     @InjectRepository(Role)
     private readonly roleRepository: Repository<Role>,
+    private readonly mailerService: MailerService
     /*  @InjectRepository(Team)
     private readonly teamRepository: Repository<Team> */
   ) {}
@@ -41,7 +45,18 @@ export class AppUsersService {
     const result: AppUser = await this.appUserRepository.save(createAppUserDto);
     await this.addContactInfoOnUser(createAppUserDto.contactInfo, result);
     await this.addRoleOnUser(createAppUserDto.role, result);
-
+    let userEmail: string;
+    createAppUserDto.contactInfo.forEach(c => {
+      if(c.type.toLocaleLowerCase() === 'email' && c.isPrimary) userEmail = c.info 
+    });
+    const mailBody: EmailBody = {
+      replacements: {
+        name:`${result.firstName} ${result.lastName} aka ${result.username}`,
+      },
+      address: userEmail,
+      name: `${result.firstName} ${result.lastName}`,
+    };
+    await this.sendWelcomeEmail(mailBody);
     return {
       message: `${result.username} is created successfully!`,
       appUserId: result.id,
@@ -121,5 +136,15 @@ export class AppUsersService {
       role.appUser = appUser;
       await this.roleRepository.save(role);
     });
+  }
+  async sendWelcomeEmail(body: EmailBody) {
+    const dto: SendEmailInterface = {
+      //from: { name: 'Lucy', address: 'lucy1-1-1@outlook.com' },
+      recipients: [{ name: body.name, address: body.address }],
+      subject: 'Welcome to TaskManager App',
+      html: '<p>Hi %name%, welcome to TaskManager App you can see docs on <a href="http://localhost:3000/api">here</a></p>',
+      placeHolderReplacements: body.replacements,
+    };
+    return await this.mailerService.sendEmail(dto);
   }
 }
