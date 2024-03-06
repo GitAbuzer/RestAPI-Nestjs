@@ -10,11 +10,14 @@ import { Team } from 'src/teams/entities/team.entity';
 import { AppUsersController } from './app-users.controller';
 import { AppUsersService } from './app-users.service';
 import { MailerService } from 'src/mailer/mailer.service';
+import { ProducerService } from 'src/queues/producer.file';
+import { QueuesModule } from 'src/queues/queues.module';
 
 @Module({
   controllers: [AppUsersController],
-  providers: [AppUsersService, MailerService],
+  providers: [AppUsersService, MailerService, ProducerService],
   imports: [
+    QueuesModule,
     TypeOrmModule.forFeature([
       AppUser,
       Address,

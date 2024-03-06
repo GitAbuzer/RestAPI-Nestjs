@@ -1,4 +1,4 @@
-import { Body, Controller, Post, Query } from '@nestjs/common';
+import { Body, Controller, Post } from '@nestjs/common';
 import { MailerService } from './mailer.service';
 import { SendEmailInterface } from './mail.interface';
 import { ApiProperty } from '@nestjs/swagger';
@@ -7,8 +7,8 @@ export class EmailBody {
   @ApiProperty({
     type: 'object',
     additionalProperties: {
-      type: 'string'
-    }
+      type: 'string',
+    },
   })
   replacements: Record<string, string>;
   @ApiProperty()
@@ -20,8 +20,6 @@ export class EmailBody {
 @Controller('mailer')
 export class MailerController {
   constructor(private readonly mailerService: MailerService) {}
-
-
 
   @Post('send')
   async sendEmail(@Body() body: EmailBody) {

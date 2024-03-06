@@ -11,7 +11,7 @@ import { ProfilesModule } from './profiles/profile.module';
 import { TasksModule } from './tasks/tasks.module';
 import { ConfigModule } from '@nestjs/config';
 import { MailerModule } from './mailer/mailer.module';
-
+import { QueuesModule } from './queues/queues.module';
 @Module({
   imports: [
     ConfigModule.forRoot({
@@ -34,6 +34,7 @@ import { MailerModule } from './mailer/mailer.module';
       autoLoadEntities: true,
       synchronize: true,
     }),
+    QueuesModule,
     MailerModule,
   ],
   controllers: [AppController],

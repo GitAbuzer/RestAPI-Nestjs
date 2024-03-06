@@ -15,6 +15,7 @@ COPY . .
 
 # Docker env
 ENV DATABASE_HOST=db
+ENV DATABASE_PORT=5432
 ENV PORT=5000
 
 # Copy the .env and .env.development files

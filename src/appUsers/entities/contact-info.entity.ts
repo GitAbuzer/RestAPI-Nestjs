@@ -2,6 +2,7 @@ import {
   Column,
   CreateDateColumn,
   Entity,
+  Index,
   ManyToOne,
   PrimaryGeneratedColumn,
   UpdateDateColumn,
@@ -23,6 +24,7 @@ export class ContactInfo {
   title: string;
 
   @Column()
+  @Index({ unique: true })
   info: string;
 
   @ManyToOne(() => AppUser, (appUser) => appUser.contactInfos)

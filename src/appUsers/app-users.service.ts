@@ -1,6 +1,6 @@
 import { Injectable } from '@nestjs/common';
 import { InjectRepository } from '@nestjs/typeorm';
-import { Repository } from 'typeorm';
+import { In, Repository } from 'typeorm';
 import CreateAppUserDto from './dto/requests/create-app-user.dto';
 import AppUser from './entities/app-user.entity';
 import { UpdateAppUserDto } from './dto/requests/update-app-user.dto';
@@ -12,6 +12,7 @@ import { createHash } from 'crypto';
 import { SendEmailInterface } from 'src/mailer/mail.interface';
 import { EmailBody } from 'src/mailer/mailer.controller';
 import { MailerService } from 'src/mailer/mailer.service';
+import { ProducerService } from 'src/queues/producer.file';
 
 @Injectable()
 export class AppUsersService {
@@ -22,7 +23,8 @@ export class AppUsersService {
     private readonly contactInfoRepository: Repository<ContactInfo>,
     @InjectRepository(Role)
     private readonly roleRepository: Repository<Role>,
-    private readonly mailerService: MailerService
+    private readonly mailerService: MailerService,
+    private readonly producerService: ProducerService,
     /*  @InjectRepository(Team)
     private readonly teamRepository: Repository<Team> */
   ) {}
@@ -42,16 +44,35 @@ export class AppUsersService {
       };
     }
 
+    const contactInfos: string[] = [];
+    createAppUserDto.contactInfo.forEach((c) => {
+      contactInfos.push(c.info);
+    });
+
+    const isContactInfoExist: string[] | boolean =
+      await this.isAnyContactInfoExist(contactInfos);
+
+    if (Array.isArray(isContactInfoExist) && isContactInfoExist.length > 0) {
+      return {
+        message:
+          isContactInfoExist.length > 1
+            ? `${isContactInfoExist} are already in use!`
+            : `${isContactInfoExist.at(0)} is already in use!`,
+        success: false,
+      };
+    }
+
     const result: AppUser = await this.appUserRepository.save(createAppUserDto);
     await this.addContactInfoOnUser(createAppUserDto.contactInfo, result);
     await this.addRoleOnUser(createAppUserDto.role, result);
     let userEmail: string;
-    createAppUserDto.contactInfo.forEach(c => {
-      if(c.type.toLocaleLowerCase() === 'email' && c.isPrimary) userEmail = c.info 
+    createAppUserDto.contactInfo.forEach((c) => {
+      if (c.type.toLocaleLowerCase() === 'email' && c.isPrimary)
+        userEmail = c.info;
     });
     const mailBody: EmailBody = {
       replacements: {
-        name:`${result.firstName} ${result.lastName} aka ${result.username}`,
+        name: `${result.firstName} ${result.lastName} aka ${result.username}`,
       },
       address: userEmail,
       name: `${result.firstName} ${result.lastName}`,
@@ -64,6 +85,22 @@ export class AppUsersService {
     };
   }
 
+  async isAnyContactInfoExist(
+    contactInfos: string[],
+  ): Promise<string[] | boolean> {
+    const contacts: ContactInfo[] = await this.contactInfoRepository.find({
+      where: {
+        info: In(contactInfos),
+        isActive: true,
+      },
+    });
+    if (contacts.length > 0) {
+      const existContacts: string[] = [];
+      contacts.forEach((c) => existContacts.push(c.info));
+      return existContacts;
+    }
+    return false;
+  }
   async findAll(): Promise<AppUser[] | string> {
     const appUsers: AppUser[] = await this.appUserRepository.find({
       relations: {
@@ -107,12 +144,12 @@ export class AppUsersService {
     const result = await this.appUserRepository.update(id, updateAppUserDto);
     return result.affected > 0
       ? `update operation is done successfully with ${id} `
-      : `something went wrong while update ${id} Address!`;
+      : `something went wrong while update ${id} AppUser!`;
   }
 
   async remove(id: number) {
     await this.appUserRepository.delete(id);
-    return `This action removes a #${id} Address`;
+    return `This action removes a #${id} AppUser`;
   }
 
   async addContactInfoOnUser(
@@ -145,6 +182,6 @@ export class AppUsersService {
       html: '<p>Hi %name%, welcome to TaskManager App you can see docs on <a href="http://localhost:3000/api">here</a></p>',
       placeHolderReplacements: body.replacements,
     };
-    return await this.mailerService.sendEmail(dto);
+    return await this.producerService.addToEmailQueue(dto);
   }
 }

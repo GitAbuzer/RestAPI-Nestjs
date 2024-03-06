@@ -1,5 +1,4 @@
 import { Address } from '@nestjs-modules/mailer/dist/interfaces/send-mail-options.interface';
-import { MailerService } from '@nestjs-modules/mailer/dist/mailer.service';
 import { Injectable } from '@nestjs/common';
 
 export type SendEmailDto = {
@@ -18,7 +17,7 @@ export class AppService {
     return 'Hello World!';
   }
 
-/*   async sendEmail(dto: SendEmailDto) {
+  /*   async sendEmail(dto: SendEmailDto) {
     const { recipients, subject, text, html } = dto;
 
     const sender: string | Address = dto.sender || {

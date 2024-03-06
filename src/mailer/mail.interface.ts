@@ -1,4 +1,4 @@
-import { Address } from "nodemailer/lib/mailer";
+import { Address } from 'nodemailer/lib/mailer';
 
 export type SendEmailInterface = {
   from?: string | Address;
