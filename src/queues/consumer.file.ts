@@ -7,7 +7,7 @@ import { MailerService } from 'src/mailer/mailer.service';
 export class ConsumerService implements OnModuleInit {
   private channelWrapper: ChannelWrapper;
   private readonly logger: Logger = new Logger(ConsumerService.name);
-
+  private readonly emailQueue: string = 'emailQueue';
   constructor(private emailService: MailerService) {
     const connection = amqp.connect(['amqp://rabbitmq']);
     this.channelWrapper = connection.createChannel();
@@ -16,8 +16,8 @@ export class ConsumerService implements OnModuleInit {
   public async onModuleInit() {
     try {
       await this.channelWrapper.addSetup(async (channel: ConfirmChannel) => {
-        await channel.assertQueue('emailQueue', { durable: true });
-        await channel.consume('emailQueue', async (message) => {
+        await channel.assertQueue(this.emailQueue, { durable: true });
+        await channel.consume(this.emailQueue, async (message) => {
           if (message) {
             const content = JSON.parse(message.content.toString());
 
