@@ -1,4 +1,4 @@
-import { Injectable } from '@nestjs/common';
+import { Injectable, Logger } from '@nestjs/common';
 import { InjectRepository } from '@nestjs/typeorm';
 import { In, Repository } from 'typeorm';
 import CreateAppUserDto from './dto/requests/create-app-user.dto';
@@ -23,8 +23,6 @@ export class AppUsersService {
     @InjectRepository(Role)
     private readonly roleRepository: Repository<Role>,
     private readonly producerService: ProducerService,
-    /*  @InjectRepository(Team)
-    private readonly teamRepository: Repository<Team> */
   ) {}
 
   async create(createAppUserDto: CreateAppUserDto): Promise<object | any> {
@@ -60,16 +58,14 @@ export class AppUsersService {
       };
     }
 
-    const entity: AppUser =
-      await this.appUserRepository.create(createAppUserDto);
-    await this.addContactInfoOnUser(createAppUserDto.contactInfos, entity);
-    await this.addRoleOnUser(createAppUserDto.roles, entity);
+    const result: AppUser = await this.appUserRepository.save(createAppUserDto);
+    await this.addContactInfoOnUser(createAppUserDto.contactInfos, result);
+    await this.addRoleOnUser(createAppUserDto.roles, result);
     let userEmail: string;
     createAppUserDto.contactInfos.forEach((c) => {
       if (c.type.toLocaleLowerCase() === 'email' && c.isPrimary)
         userEmail = c.info;
     });
-    const result: AppUser = await this.appUserRepository.save(entity);
     const mailBody: EmailBody = {
       replacements: {
         name: `${result.firstName} ${result.lastName} aka ${result.username}`,
@@ -80,7 +76,7 @@ export class AppUsersService {
     await this.sendWelcomeEmail(mailBody);
     return {
       message: `${result.username} is created successfully!`,
-      appUserId: result.id,
+      appUserId: `${result.id}`,
       success: true,
     };
   }
@@ -157,23 +153,34 @@ export class AppUsersService {
     contactInfos: CreateContactInfoDto[],
     result: AppUser,
   ) {
-    contactInfos.forEach(async (e) => {
-      const contactInfo: ContactInfo = new ContactInfo();
-      const appUser: AppUser = result;
-      Object.assign(contactInfo, e);
-      contactInfo.appUser = appUser;
-      await this.contactInfoRepository.save(contactInfo);
-    });
-    return `Contact infos added successfully!`;
+    try {
+      contactInfos.forEach(async (e) => {
+        const contactInfo: ContactInfo = new ContactInfo();
+        const appUser: AppUser = result;
+        Object.assign(contactInfo, e);
+        contactInfo.appUser = appUser;
+        await this.contactInfoRepository.save(contactInfo);
+      });
+      return `Contact infos added successfully!`;
+    } catch (error) {
+      Logger.warn(contactInfos);
+      Logger.error(error);
+    }
   }
   async addRoleOnUser(roles: CreateRoleDto[], result: AppUser) {
-    roles.forEach(async (e) => {
-      const role: Role = new Role();
-      const appUser: AppUser = result;
-      Object.assign(role, e);
-      role.appUser = appUser;
-      await this.roleRepository.save(role);
-    });
+    try {
+      roles.forEach(async (e) => {
+        const role: Role = new Role();
+        const appUser: AppUser = result;
+        Logger.log(role.type);
+        Object.assign(role, e);
+        role.appUser = appUser;
+        await this.roleRepository.save(role);
+      });
+    } catch (error) {
+      Logger.warn(roles);
+      Logger.error(error);
+    }
   }
   async sendWelcomeEmail(body: EmailBody) {
     const dto: SendEmailInterface = {

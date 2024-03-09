@@ -23,6 +23,16 @@ export class ConsumerService implements OnModuleInit {
         await channel.consume(this.emailQueue, async (message) => {
           if (message) {
             const content = JSON.parse(message.content.toString());
+            let retryCount = 0;
+            this.logger.debug(message.properties.headers);
+            if (
+              message.properties.headers &&
+              message.properties.headers['x-retry-count']
+            ) {
+              retryCount = parseInt(
+                message.properties.headers['x-retry-count'],
+              );
+            }
 
             try {
               const result = await this.emailService.sendEmail(content);
@@ -31,13 +41,12 @@ export class ConsumerService implements OnModuleInit {
             } catch (error) {
               this.logger.error('Error sending email:', error);
 
-              const retryCount: number =
-                message.properties.headers['x-retry-count'] || 0;
               if (retryCount < this.maxRetries) {
                 const updatedHeaders = {
                   ...message.properties.headers,
                   'x-retry-count': retryCount + 1,
                 };
+
                 setTimeout(() => {
                   // Re-publish the message with updated headers
                   channel.publish(

@@ -35,7 +35,7 @@ export class AuthService {
     const roles: string[] = [];
 
     user?.roles.forEach((role) => {
-      roles.push(role.title.toString());
+      roles.push(role.type.toString());
     });
     const payload = {
       sub: user.id,

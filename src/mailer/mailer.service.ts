@@ -1,4 +1,4 @@
-import { Injectable, Logger } from '@nestjs/common';
+import { HttpException, HttpStatus, Injectable, Logger } from '@nestjs/common';
 import * as nodemailer from 'nodemailer';
 import { SendEmailInterface } from './mail.interface';
 import Mail from 'nodemailer/lib/mailer';
@@ -50,6 +50,7 @@ export class MailerService {
       return result;
     } catch (error) {
       this.logger.error(error);
+      throw new HttpException(error, HttpStatus.FAILED_DEPENDENCY);
     }
   }
 }

@@ -27,7 +27,7 @@ export class Role {
     enum: RoleType,
     default: RoleType.User,
   })
-  title: RoleType;
+  type: RoleType;
 
   @Column({
     default: true,
