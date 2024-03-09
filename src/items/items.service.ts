@@ -13,8 +13,12 @@ export class ItemsService {
   ) {}
 
   async create(createItemDto: CreateItemDto) {
-    const result: TestItem = await this.itemsRepository.save(createItemDto);
-    return `${result.id} is created successfully!`;
+    try {
+      const result: TestItem = await this.itemsRepository.save(createItemDto);
+      return `${result.id} is created successfully!`;
+    } catch (er) {
+      throw new Error(er);
+    }
   }
 
   async findAll() {

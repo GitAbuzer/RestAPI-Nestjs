@@ -11,7 +11,6 @@ import { CreateContactInfoDto } from './dto/requests/create-contact-info.dto';
 import { createHash } from 'crypto';
 import { SendEmailInterface } from 'src/mailer/mail.interface';
 import { EmailBody } from 'src/mailer/mailer.controller';
-import { MailerService } from 'src/mailer/mailer.service';
 import { ProducerService } from 'src/queues/producer.file';
 
 @Injectable()
@@ -23,7 +22,6 @@ export class AppUsersService {
     private readonly contactInfoRepository: Repository<ContactInfo>,
     @InjectRepository(Role)
     private readonly roleRepository: Repository<Role>,
-    private readonly mailerService: MailerService,
     private readonly producerService: ProducerService,
     /*  @InjectRepository(Team)
     private readonly teamRepository: Repository<Team> */
@@ -45,7 +43,7 @@ export class AppUsersService {
     }
 
     const contactInfos: string[] = [];
-    createAppUserDto.contactInfo.forEach((c) => {
+    createAppUserDto.contactInfos.forEach((c) => {
       contactInfos.push(c.info);
     });
 
@@ -62,14 +60,16 @@ export class AppUsersService {
       };
     }
 
-    const result: AppUser = await this.appUserRepository.save(createAppUserDto);
-    await this.addContactInfoOnUser(createAppUserDto.contactInfo, result);
-    await this.addRoleOnUser(createAppUserDto.role, result);
+    const entity: AppUser =
+      await this.appUserRepository.create(createAppUserDto);
+    await this.addContactInfoOnUser(createAppUserDto.contactInfos, entity);
+    await this.addRoleOnUser(createAppUserDto.roles, entity);
     let userEmail: string;
-    createAppUserDto.contactInfo.forEach((c) => {
+    createAppUserDto.contactInfos.forEach((c) => {
       if (c.type.toLocaleLowerCase() === 'email' && c.isPrimary)
         userEmail = c.info;
     });
+    const result: AppUser = await this.appUserRepository.save(entity);
     const mailBody: EmailBody = {
       replacements: {
         name: `${result.firstName} ${result.lastName} aka ${result.username}`,
@@ -111,16 +111,14 @@ export class AppUsersService {
   }
 
   async findOne(id: number) {
-    const appUser: AppUser = (
-      await this.appUserRepository.find({
-        where: {
-          id: id,
-        },
-        relations: {
-          profile: true,
-        },
-      })
-    ).at(0);
+    const appUser: AppUser = await this.appUserRepository.findOne({
+      where: {
+        id: id,
+      },
+      relations: {
+        profile: true,
+      },
+    });
     return appUser ? appUser : `AppUser not found with ${id}!`;
   }
 
@@ -147,9 +145,12 @@ export class AppUsersService {
       : `something went wrong while update ${id} AppUser!`;
   }
 
-  async remove(id: number) {
-    await this.appUserRepository.delete(id);
-    return `This action removes a #${id} AppUser`;
+  async softDelete(id: number) {
+    const appUser: AppUser = await this.appUserRepository.findOneBy({ id });
+    if (!appUser) return `This action can not find a #${id} AppUser`;
+    appUser.isActive = false;
+    this.appUserRepository.save(appUser);
+    return `This action soft deleted a #${id} AppUser`;
   }
 
   async addContactInfoOnUser(

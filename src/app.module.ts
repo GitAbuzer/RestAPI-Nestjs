@@ -1,4 +1,9 @@
-import { Module } from '@nestjs/common';
+import {
+  MiddlewareConsumer,
+  Module,
+  NestModule,
+  RequestMethod,
+} from '@nestjs/common';
 import { AppController } from './app.controller';
 import { AppService } from './app.service';
 import { ItemsModule } from './items/items.module';
@@ -12,6 +17,9 @@ import { TasksModule } from './tasks/tasks.module';
 import { ConfigModule } from '@nestjs/config';
 import { MailerModule } from './mailer/mailer.module';
 import { QueuesModule } from './queues/queues.module';
+import { GlobalErrorFilter } from './middlewares/global-error-handler.middleware';
+import { APP_FILTER } from '@nestjs/core';
+import { LoggerMiddleware } from './middlewares/logger.middleware';
 @Module({
   imports: [
     ConfigModule.forRoot({
@@ -38,6 +46,18 @@ import { QueuesModule } from './queues/queues.module';
     MailerModule,
   ],
   controllers: [AppController],
-  providers: [AppService],
+  providers: [
+    AppService,
+    {
+      provide: APP_FILTER,
+      useClass: GlobalErrorFilter,
+    },
+  ],
 })
-export class AppModule {}
+export class AppModule implements NestModule {
+  configure(consumer: MiddlewareConsumer) {
+    consumer
+      .apply(LoggerMiddleware)
+      .forRoutes({ path: '*', method: RequestMethod.ALL });
+  }
+}

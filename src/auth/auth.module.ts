@@ -4,8 +4,8 @@ import { AuthController } from './auth.controller';
 import AppUser from 'src/appUsers/entities/app-user.entity';
 import { TypeOrmModule } from '@nestjs/typeorm';
 import { JwtModule } from '@nestjs/jwt';
-import { jwtConstants } from './constants/jwt.constants';
 import { JwtStrategy } from './jwt.strategy';
+import { jwtSecretKey } from './constants/jwt.constants';
 
 @Module({
   providers: [AuthService, JwtStrategy],
@@ -15,7 +15,7 @@ import { JwtStrategy } from './jwt.strategy';
     TypeOrmModule.forFeature([AppUser]),
     JwtModule.register({
       global: true,
-      secret: jwtConstants.secret,
+      secret: process.env.TOKEN_KEY || jwtSecretKey,
       signOptions: { expiresIn: '8h' },
     }),
   ],

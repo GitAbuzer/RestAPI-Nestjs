@@ -8,6 +8,9 @@ export class ConsumerService implements OnModuleInit {
   private channelWrapper: ChannelWrapper;
   private readonly logger: Logger = new Logger(ConsumerService.name);
   private readonly emailQueue: string = 'emailQueue';
+  private readonly maxRetries: number = 3; // Maximum number of retries
+  private readonly retryDelay: number = 5000; // Retry delay in milliseconds
+
   constructor(private emailService: MailerService) {
     const connection = amqp.connect(['amqp://rabbitmq']);
     this.channelWrapper = connection.createChannel();
@@ -21,9 +24,35 @@ export class ConsumerService implements OnModuleInit {
           if (message) {
             const content = JSON.parse(message.content.toString());
 
-            const result = await this.emailService.sendEmail(content);
-            this.logger.log('Mail sending result: ', result);
-            channel.ack(message);
+            try {
+              const result = await this.emailService.sendEmail(content);
+              this.logger.log('Mail sending result:', result);
+              channel.ack(message);
+            } catch (error) {
+              this.logger.error('Error sending email:', error);
+
+              const retryCount: number =
+                message.properties.headers['x-retry-count'] || 0;
+              if (retryCount < this.maxRetries) {
+                const updatedHeaders = {
+                  ...message.properties.headers,
+                  'x-retry-count': retryCount + 1,
+                };
+                setTimeout(() => {
+                  // Re-publish the message with updated headers
+                  channel.publish(
+                    '',
+                    this.emailQueue,
+                    Buffer.from(message.content),
+                    { headers: updatedHeaders },
+                  );
+                  channel.ack(message);
+                }, this.retryDelay);
+              } else {
+                this.logger.error('Max retries exceeded, message discarded.');
+                channel.reject(message, false); // Requeue message
+              }
+            }
           }
         });
       });

@@ -28,7 +28,13 @@ export class AppUsersController {
 
   @Post()
   async create(@Body() createAppUserDto: CreateAppUserDto) {
-    return await this.appUsersService.create(createAppUserDto);
+    try {
+      return await this.appUsersService.create(createAppUserDto);
+    } catch (er) {
+      return {
+        errorMessage: `Something went wrong with ${er}`,
+      };
+    }
   }
 
   @HasRoles(RoleType.Admin)
@@ -67,7 +73,7 @@ export class AppUsersController {
     return `${status} ${result}`;
   }
 
-  @Post('addContactInfo/:id')
+  @Post(':id/addContactInfo')
   async addContactInfo(
     @Param('id') id: string,
     @Body() createContactInfoDto: CreateContactInfoDto,
@@ -85,6 +91,6 @@ export class AppUsersController {
 
   @Delete(':id')
   async remove(@Param('id') id: string) {
-    return await this.appUsersService.remove(+id);
+    return await this.appUsersService.softDelete(+id);
   }
 }

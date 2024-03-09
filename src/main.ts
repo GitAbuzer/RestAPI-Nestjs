@@ -8,8 +8,11 @@ import { CreateProfileDto } from './profiles/dto/create-profile.dto';
 import { UpdateAddressDto } from './addresses/dto/requests/update.address.dto';
 import { UpdateAppUserDto } from './appUsers/dto/requests/update-app-user.dto';
 import { UpdateProfileDto } from './profiles/dto/update-profile.dto';
+import { ValidationPipe } from '@nestjs/common';
 
 async function bootstrap() {
+  const port: number = parseInt(process.env.PORT) || 3000;
+
   const app = await NestFactory.create(AppModule, {
     cors: true,
   });
@@ -35,9 +38,12 @@ async function bootstrap() {
   });
 
   SwaggerModule.setup('swagger', app, document);
-
   app.enableCors();
-
-  await app.listen(process.env.PORT);
+  app.useGlobalPipes(
+    new ValidationPipe({
+      disableErrorMessages: false,
+    }),
+  );
+  await app.listen(port);
 }
 bootstrap();

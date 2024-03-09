@@ -30,27 +30,26 @@ export class MailerService {
   async sendEmail(dto: SendEmailInterface) {
     const { from, recipients, subject } = dto;
     if (!dto || !dto.recipients || dto.recipients.length === 0) {
-      throw new Error('No recipients defined');
+      this.logger.error('No recipients defined');
     }
-    const html: string = dto.placeHolderReplacements
-      ? this.createTemplate(dto.html, dto.placeHolderReplacements)
-      : dto.html;
-    const transport: any = this.mailTransport();
-    const options: Mail.Options = {
-      from: from ?? {
-        name: process.env.APP_NAME,
-        address: process.env.DEFAULT_MAIL_SENDER,
-      },
-      to: recipients,
-      subject,
-      html,
-    };
     try {
+      const html: string = dto.placeHolderReplacements
+        ? this.createTemplate(dto.html, dto.placeHolderReplacements)
+        : dto.html;
+      const transport: any = this.mailTransport();
+      const options: Mail.Options = {
+        from: from ?? {
+          name: process.env.APP_NAME,
+          address: process.env.DEFAULT_MAIL_SENDER,
+        },
+        to: recipients,
+        subject,
+        html,
+      };
       const result: any = await transport.sendMail(options);
       return result;
     } catch (error) {
       this.logger.error(error);
-      throw new Error(error);
     }
   }
 }

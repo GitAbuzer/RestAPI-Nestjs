@@ -13,9 +13,9 @@ export class CreateRoleDto {
   @ApiProperty({
     enum: RoleType,
     isArray: false,
-    example: 'admin',
+    example: 'user',
   })
-  title: RoleType;
+  type: RoleType;
 
   @ApiProperty()
   description: string;
