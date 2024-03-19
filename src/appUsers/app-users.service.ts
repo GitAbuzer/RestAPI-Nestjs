@@ -1,4 +1,5 @@
 import {
+  ConflictException,
   Injectable,
   InternalServerErrorException,
   Logger,
@@ -36,19 +37,14 @@ export class AppUsersService {
   ) {}
 
   async create(createAppUserDto: CreateAppUserDto): Promise<object | any> {
-    const isExist: boolean = await this.appUserRepository.exists({
+    if (await this.appUserRepository.exists({
       where: { username: createAppUserDto.username },
-    });
+    }))
+    throw new ConflictException(`${createAppUserDto.username} has already exists!`);
     const sha256Password = createHash('sha256')
       .update(createAppUserDto.password)
       .digest('base64');
     createAppUserDto.password = sha256Password;
-    if (isExist) {
-      return {
-        message: `${createAppUserDto.username} has already exists!`,
-        success: false,
-      };
-    }
 
     const contactInfos: string[] = [];
 
@@ -59,15 +55,15 @@ export class AppUsersService {
     const isContactInfoExist: string[] | boolean =
       await this.isAnyContactInfoExist(contactInfos);
 
-    if (Array.isArray(isContactInfoExist) && isContactInfoExist.length > 0) {
-      return {
+    if (Array.isArray(isContactInfoExist) && isContactInfoExist.length > 0)
+      throw new ConflictException({
         message:
           isContactInfoExist.length > 1
             ? `${isContactInfoExist} are already in use!`
             : `${isContactInfoExist.at(0)} is already in use!`,
         success: false,
-      };
-    }
+      });
+
 
     const result: AppUser = await this.appUserRepository.save(createAppUserDto);
     await this.addContactInfoOnUser(createAppUserDto.contactInfos, result);
@@ -76,7 +72,7 @@ export class AppUsersService {
       createAppUserDto.contactInfos,
       result,
     );
-    await this.addWelcomeEmailOnQueue(mailBody);
+    //await this.addWelcomeEmailOnQueue(mailBody);
     return {
       message: `${result.username} is created successfully!`,
       appUserId: `${result.id}`,
@@ -144,9 +140,16 @@ export class AppUsersService {
     id: number,
     createContactInfoDto: CreateContactInfoDto,
   ) {
+    if (this.contactInfoRepository.existsBy({
+      info: createContactInfoDto.info,
+    }))
+      throw new ConflictException({
+        message: `there is a contact info already exist with ${createContactInfoDto.info}`
+      });
     const createContactInfoDtos: CreateContactInfoDto[] = [];
     createContactInfoDtos.push(createContactInfoDto);
     const appUser: AppUser = await this.appUserRepository.findOneBy({ id });
+    const contactInfo: ContactInfo = new ContactInfo();
     return await this.addContactInfoOnUser(createContactInfoDtos, appUser);
   }
 

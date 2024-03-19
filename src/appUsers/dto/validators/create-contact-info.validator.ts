@@ -15,11 +15,11 @@ export function IsEmailOrPhone(validationOptions?: ValidationOptions) {
       options: validationOptions,
       validator: {
         validate(value: any, args: ValidationArguments) {
-          const type = (args.object as any).type;
+          const type: string = (args.object as any).type;
           Logger.log(type);
-          if (type === 'email') {
+          if (type.toLowerCase() === 'email') {
             return isEmail(value);
-          } else if (type === 'phone') {
+          } else if (type.toLowerCase() === 'phone') {
             return isPhoneNumber(value);
           }
           return false;

@@ -3,6 +3,7 @@ import {
   Get,
   Post,
   Body,
+  Res,
   Patch,
   Param,
   Delete,
@@ -12,14 +13,19 @@ import { AddressesService } from './addresses.service';
 import { CreateAddressDto } from './dto/requests/create-address.dto';
 import { UpdateAddressDto } from './dto/requests/update.address.dto';
 import { Address } from './entities/address.entity';
-
+import { Response } from 'express';
 @Controller('addresses')
 export class AddressesController {
   constructor(private readonly addressesService: AddressesService) {}
 
   @Post()
-  async create(@Body() createAddressDto: CreateAddressDto) {
-    return await this.addressesService.create(createAddressDto);
+  async create(
+    @Body() createAddressDto: CreateAddressDto, 
+    @Res() response: Response,
+  ) {
+    response.status(HttpStatus.CREATED).send({
+      result: await this.addressesService.create(createAddressDto)
+    });
   }
 
   @Get()

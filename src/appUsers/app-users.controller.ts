@@ -51,28 +51,34 @@ export class AppUsersController {
   async findAll(@Res() response: Response) {
     response
       .status(HttpStatus.OK)
-      .send({ result: await this.appUsersService.findAll() });
+      .send({ response: await this.appUsersService.findAll() });
   }
 
   @UseInterceptors(ClassSerializerInterceptor)
   @Get(':id')
   async findOne(@Param('id') id: string, @Res() response: Response) {
     response.status(HttpStatus.OK).send({
-      result: await this.appUsersService.findOne(+id),
+      response: await this.appUsersService.findOne(+id),
     });
   }
   @UseInterceptors(ClassSerializerInterceptor)
   @Get(':teamMemberId/teams')
-  async findWithTeam(@Param('teamMemberId') teamMemberId: string) {
+  async findWithTeam(
+    @Param('teamMemberId') teamMemberId: string,
+    @Res() response: Response,  
+  ) {
     const result: GetAppUserWithTeam[] | NotFoundException =
       await this.appUsersService.getTeamMemberInfo(+teamMemberId);
-    return result;
+    response.status(HttpStatus.OK).send({
+      response: result,
+    });
   }
 
   @Patch(':id')
   async update(
     @Param('id') id: string,
     @Body() updateAppUserDto: UpdateAppUserDto,
+    @Res() response: Response,
   ) {
     const result: string = await this.appUsersService.update(
       +id,
@@ -81,13 +87,14 @@ export class AppUsersController {
     const status: HttpStatus = result.includes('wrong')
       ? HttpStatus.BAD_REQUEST
       : HttpStatus.OK;
-    return `${status} ${result}`;
+    response.status(status).send({ result: result });
   }
 
   @Post(':id/addContactInfo')
   async addContactInfo(
     @Param('id') id: string,
     @Body() createContactInfoDto: CreateContactInfoDto,
+    @Res() response: Response,
   ) {
     const result: string =
       await this.appUsersService.addNewContactInfoOnAppUser(
@@ -95,9 +102,11 @@ export class AppUsersController {
         createContactInfoDto,
       );
     const status: HttpStatus = result.includes('wrong')
-      ? HttpStatus.BAD_REQUEST
+      ? HttpStatus.INTERNAL_SERVER_ERROR
       : HttpStatus.OK;
-    return `${status} ${result}`;
+    response.status(status).send({
+      result: result
+    });
   }
 
   // Warning⚠️: That endpoint codded for an example of SQL Injection problem
