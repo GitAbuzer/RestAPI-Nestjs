@@ -1,4 +1,4 @@
-import { Injectable } from '@nestjs/common';
+import { Injectable, InternalServerErrorException, NotFoundException } from '@nestjs/common';
 import { InjectRepository } from '@nestjs/typeorm';
 import { EntityNotFoundError, Repository } from 'typeorm';
 import AppUser from 'src/appUsers/entities/app-user.entity';
@@ -18,13 +18,16 @@ export class TasksService {
     private readonly teamsRepository: Repository<Team>,
   ) {}
 
-  async create(createTaskDto: CreateTaskDto): Promise<string> {
+  async create(createTaskDto: CreateTaskDto): Promise<object> {
     const creator: AppUser = (
       await this.appUserRepository.find({
         where: { id: createTaskDto.creatorId },
         //relations: { roles: true }
       })
     ).at(0);
+    if (!creator)
+      throw new NotFoundException(`creator not found with ${createTaskDto.creatorId}`);
+
     const entity: Task = await this.tasksRepository.create(createTaskDto);
     entity.creator = creator;
     if (createTaskDto.contributorId) {
@@ -34,50 +37,56 @@ export class TasksService {
           relations: { tasks: true },
         })
       ).at(0);
+      if (!contributor)
+        throw new NotFoundException(`Contributor not found with ${createTaskDto.contributorId}`);
       entity.worker = contributor;
       contributor.tasks.push(entity);
       await this.appUserRepository.save(contributor);
     }
     const result: Task = await this.tasksRepository.save(entity);
-    if (createTaskDto.teamId) {
+    if (createTaskDto.teamId && !await this.tasksRepository.exists({ 
+      where: {id: createTaskDto.teamId }, 
+    })) 
+      throw new NotFoundException(`There is no team with ${createTaskDto.teamId}`);
+    else 
       this.addTaskOnATeam(result.id, createTaskDto.teamId);
-    }
-    return `${result.id} is created successfully!`;
+    return {
+      id: result.id,
+      createdDate: result.createdDate,
+      title: result.title,
+    };
   }
 
-  async findByWorkerId(workerId: number): Promise<Task[] | object> {
+  async findByWorkerId(workerId: number): Promise<Task[] | NotFoundException> {
     try {
       const worker: AppUser = await this.appUserRepository.findOneOrFail({
         where: { id: workerId },
         relations: { tasks: true },
       });
-      if (worker.tasks.length === 0)
-        return {
-          message: `${worker.username} has no tasks!`,
-          status: 404,
-        };
-      return worker.tasks;
+      return (!worker.tasks.length) ?
+        new NotFoundException() : worker.tasks;
     } catch (error) {
       if (error instanceof EntityNotFoundError)
-        return {
-          message: `There is no user with ${workerId}!`,
-          status: 404,
-        };
+        throw new NotFoundException(`There is no user with ${workerId}!`);
       else
-        return {
-          message: `Something went wrong!`,
-          status: 500,
-        };
+        throw new InternalServerErrorException(error);
     }
   }
-  async findByTeam(teamId: number) {
-    const team: Team = (
-      await this.teamsRepository.find({
+  async findByTeam(teamId: number): Promise<Task[] | NotFoundException>{
+    try {
+
+      const team: Team = await this.teamsRepository.findOneOrFail({
         where: { id: teamId },
         relations: { tasks: true },
-      })
-    ).at(0);
-    return team.tasks;
+      });
+      return (!team.tasks.length) ? 
+        new NotFoundException(`${team.name} has no tasks yet!`):
+      team.tasks;
+    }catch (error) {
+      if (error instanceof EntityNotFoundError)
+        throw new NotFoundException(`There is no task with ${teamId}`);
+      throw new InternalServerErrorException(error);
+    }
   }
   async findAll() {
     const tasks: Task[] = await this.tasksRepository.find();

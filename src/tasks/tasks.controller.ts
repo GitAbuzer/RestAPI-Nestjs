@@ -8,20 +8,28 @@ import {
   Delete,
   HttpStatus,
   Query,
+  Res,
+  NotFoundException,
 } from '@nestjs/common';
 import { TasksService } from './tasks.service';
 import { CreateTaskDto } from './dto/create-task.dto';
 import { Task } from './entities/task.entity';
 import { UpdateTaskDto } from './dto/update-task.dto';
 import { TaskQueryParamsDto } from './dto/task-query-params.dto';
-
+import { Response } from 'express';
 @Controller('tasks')
 export class TasksController {
   constructor(private readonly tasksService: TasksService) {}
 
   @Post()
-  async create(@Body() createTaskDto: CreateTaskDto) {
-    return await this.tasksService.create(createTaskDto);
+  async create(
+    @Body() createTaskDto: CreateTaskDto,
+    @Res() res: Response,
+  ) {
+    const response: Response = res.status(HttpStatus.CREATED).send({
+      result: await this.tasksService.create(createTaskDto),
+    }); 
+    return response;
   }
 
   @Get()
@@ -30,10 +38,14 @@ export class TasksController {
   }
 
   @Get('getBy')
-  async findAllByWorkerId(@Query() params: TaskQueryParamsDto) {
-    return params.workerId
+  async findAllByWorkerId(
+    @Query() params: TaskQueryParamsDto,
+    @Res() res: Response
+  ) {
+    const result: Task[] | NotFoundException = params.workerId
       ? await this.tasksService.findByWorkerId(params.workerId)
       : await this.tasksService.findByTeam(params.teamId);
+    return typeof result;
   }
 
   @Get(':id')
