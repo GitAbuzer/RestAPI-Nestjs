@@ -13,13 +13,12 @@ export class AuthService {
     private readonly appUserRepository: Repository<AppUser>,
     private readonly jwtService: JwtService,
   ) {}
-  async findUser(username: string): Promise<AppUser | undefined> {
+  async findUserByUsername(username: string): Promise<AppUser | undefined> {
     const result: AppUser = await this.appUserRepository.findOneBy({
       username,
     });
     return result;
   }
-
   async signIn(signInDto: SignInDto): Promise<{ access_token: string }> {
     if (signInDto.username === '' || signInDto.password === '')
       throw new UnauthorizedException();
@@ -28,7 +27,7 @@ export class AuthService {
       .update(signInDto.password)
       .digest('base64');
 
-    const user: AppUser = await this.findUser(signInDto.username);
+    const user: AppUser = await this.findUserByUsername(signInDto.username);
 
     if (sha256Password !== user?.password) throw new UnauthorizedException();
 
@@ -48,7 +47,7 @@ export class AuthService {
   }
 
   async validateUser(username: string, pass: string): Promise<any> {
-    const user = await this.findUser(username);
+    const user = await this.findUserByUsername(username);
     if (user && user.password === pass) {
       const { ...result } = user;
       return result;

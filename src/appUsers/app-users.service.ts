@@ -1,4 +1,9 @@
-import { Injectable, Logger } from '@nestjs/common';
+import {
+  Injectable,
+  InternalServerErrorException,
+  Logger,
+  NotFoundException,
+} from '@nestjs/common';
 import { InjectRepository } from '@nestjs/typeorm';
 import { In, Repository } from 'typeorm';
 import CreateAppUserDto from './dto/requests/create-app-user.dto';
@@ -12,6 +17,7 @@ import { createHash } from 'crypto';
 import { SendEmailInterface } from 'src/mailer/mail.interface';
 import { EmailBody } from 'src/mailer/mailer.controller';
 import { ProducerService } from 'src/queues/producer.file';
+import { GetAppUserWithTeam } from './dto/responses/get-app-user-with-team.dto';
 
 @Injectable()
 export class AppUsersService {
@@ -23,6 +29,10 @@ export class AppUsersService {
     @InjectRepository(Role)
     private readonly roleRepository: Repository<Role>,
     private readonly producerService: ProducerService,
+    @InjectRepository(GetAppUserWithTeam)
+    private readonly customAppUserRepository: Repository<GetAppUserWithTeam>,
+    @InjectRepository(AppUser)
+    private readonly customAppUserRepositorySql: Repository<AppUser>,
   ) {}
 
   async create(createAppUserDto: CreateAppUserDto): Promise<object | any> {
@@ -41,6 +51,7 @@ export class AppUsersService {
     }
 
     const contactInfos: string[] = [];
+
     createAppUserDto.contactInfos.forEach((c) => {
       contactInfos.push(c.info);
     });
@@ -61,26 +72,35 @@ export class AppUsersService {
     const result: AppUser = await this.appUserRepository.save(createAppUserDto);
     await this.addContactInfoOnUser(createAppUserDto.contactInfos, result);
     await this.addRoleOnUser(createAppUserDto.roles, result);
-    let userEmail: string;
-    createAppUserDto.contactInfos.forEach((c) => {
-      if (c.type.toLocaleLowerCase() === 'email' && c.isPrimary)
-        userEmail = c.info;
-    });
-    const mailBody: EmailBody = {
-      replacements: {
-        name: `${result.firstName} ${result.lastName} aka ${result.username}`,
-      },
-      address: userEmail,
-      name: `${result.firstName} ${result.lastName}`,
-    };
-    await this.sendWelcomeEmail(mailBody);
+    const mailBody = await this.createWelcomeEmailBody(
+      createAppUserDto.contactInfos,
+      result,
+    );
+    await this.addWelcomeEmailOnQueue(mailBody);
     return {
       message: `${result.username} is created successfully!`,
       appUserId: `${result.id}`,
       success: true,
     };
   }
+  async getTeamMemberInfo(teamMemberId: number): Promise<GetAppUserWithTeam[]> {
+    const query: string = `
+      SELECT * FROM get_team_member_info($1)
+    `;
+    const queryResult: any = await this.customAppUserRepository.query(query, [
+      teamMemberId,
+    ]);
+    if (queryResult.length === 0)
+      throw new NotFoundException(`${teamMemberId} has no team!`);
+    const resultObject: GetAppUserWithTeam[] = [];
 
+    const result: GetAppUserWithTeam[] = Object.assign(
+      resultObject,
+      queryResult,
+    );
+
+    return result;
+  }
   async isAnyContactInfoExist(
     contactInfos: string[],
   ): Promise<string[] | boolean> {
@@ -103,10 +123,11 @@ export class AppUsersService {
         profile: true,
       },
     });
-    return appUsers.length > 0 ? appUsers : `There is no Address!`;
+    if (appUsers.length === 0) throw new NotFoundException();
+    return appUsers;
   }
 
-  async findOne(id: number) {
+  async findOne(id: number): Promise<AppUser> {
     const appUser: AppUser = await this.appUserRepository.findOne({
       where: {
         id: id,
@@ -115,7 +136,8 @@ export class AppUsersService {
         profile: true,
       },
     });
-    return appUser ? appUser : `AppUser not found with ${id}!`;
+    if (!appUser) throw new NotFoundException(`there is no user with #${id}`);
+    return appUser;
   }
 
   async addNewContactInfoOnAppUser(
@@ -127,8 +149,6 @@ export class AppUsersService {
     const appUser: AppUser = await this.appUserRepository.findOneBy({ id });
     return await this.addContactInfoOnUser(createContactInfoDtos, appUser);
   }
-
-  //function successUpdateMessage: string = (id) : Promise<string> => `${id} updated!`;
 
   async update(id: number, updateAppUserDto: UpdateAppUserDto) {
     const sha256Password = createHash('sha256')
@@ -143,7 +163,8 @@ export class AppUsersService {
 
   async softDelete(id: number) {
     const appUser: AppUser = await this.appUserRepository.findOneBy({ id });
-    if (!appUser) return `This action can not find a #${id} AppUser`;
+    if (!appUser)
+      throw new NotFoundException(`There is no user with #${id} to delete!`);
     appUser.isActive = false;
     this.appUserRepository.save(appUser);
     return `This action soft deleted a #${id} AppUser`;
@@ -165,7 +186,18 @@ export class AppUsersService {
     } catch (error) {
       Logger.warn(contactInfos);
       Logger.error(error);
+      throw new InternalServerErrorException(
+        `something went wrong while added contact info on ${result.username}`,
+      );
     }
+  }
+  async selectAllWithSQLInjection(username: string) {
+    Logger.debug(username);
+    const query = await this.customAppUserRepositorySql.query(`
+    SELECT password, username
+      FROM public.app_user as a
+      WHERE a."username" = '${username}'`);
+    return query;
   }
   async addRoleOnUser(roles: CreateRoleDto[], result: AppUser) {
     try {
@@ -182,12 +214,32 @@ export class AppUsersService {
       Logger.error(error);
     }
   }
-  async sendWelcomeEmail(body: EmailBody) {
+  async createWelcomeEmailBody(
+    contactInfos: CreateContactInfoDto[],
+    result: AppUser,
+  ): Promise<EmailBody> {
+    let userEmail: string;
+    contactInfos.forEach((c) => {
+      if (c.type.toLocaleLowerCase() === 'email' && c.isPrimary)
+        userEmail = c.info;
+    });
+    const mailBody: EmailBody = {
+      replacements: {
+        name: `${result.firstName} ${result.lastName} aka ${result.username}`,
+      },
+      address: userEmail,
+      name: `${result.firstName} ${result.lastName}`,
+    };
+    return mailBody;
+  }
+  async addWelcomeEmailOnQueue(body: EmailBody) {
     const dto: SendEmailInterface = {
-      //from: { name: 'Lucy', address: 'lucy1-1-1@outlook.com' },
       recipients: [{ name: body.name, address: body.address }],
       subject: 'Welcome to TaskManager App',
-      html: '<p>Hi %name%, welcome to TaskManager App you can see docs on <a href="http://localhost:3000/api">here</a></p>',
+      html: `<p>
+                Hi %name%, welcome to TaskManager App you can see docs on 
+                <a href="http://localhost:3000/api">here</a>
+            </p>`,
       placeHolderReplacements: body.replacements,
     };
     return await this.producerService.addToEmailQueue(dto);

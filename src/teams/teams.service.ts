@@ -1,4 +1,4 @@
-import { Injectable } from '@nestjs/common';
+import { Injectable, NotFoundException } from '@nestjs/common';
 import { InjectRepository } from '@nestjs/typeorm';
 import { In, Repository } from 'typeorm';
 import AppUser from 'src/appUsers/entities/app-user.entity';
@@ -55,6 +55,14 @@ export class TeamsService {
         isActive: true,
       },
     });
+    if (appUsers.length === 0)
+      throw new NotFoundException(
+        {
+          title: 'Can not Found Any User',
+          message: 'There is no user with ids!',
+        },
+        'Please check ids you entered!',
+      );
     const team: Team = {
       ...entity,
       members: appUsers,
@@ -63,16 +71,15 @@ export class TeamsService {
   }
 
   async addNewMembersInTeam(id: number, selectedUsers: number[]) {
-    const team: Team = (
-      await this.teamRepository.find({
-        where: {
-          id: id,
-        },
-        relations: {
-          members: true,
-        },
-      })
-    ).at(0);
+    const team: Team = await this.teamRepository.findOne({
+      where: {
+        id: id,
+      },
+      relations: {
+        members: true,
+      },
+    });
+    if (!team) throw new NotFoundException(`there is no team with ${id}`);
 
     const appUsers: AppUser[] = await this.appUserRepository.find({
       where: {
@@ -81,6 +88,14 @@ export class TeamsService {
       },
     });
 
+    if (appUsers.length === 0)
+      throw new NotFoundException(
+        {
+          title: 'Can not Found Any User',
+          message: 'There is no user with ids!',
+        },
+        'Please check ids you entered!',
+      );
     team.members.push(...appUsers);
 
     return await this.teamRepository.save(team);

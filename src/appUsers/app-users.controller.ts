@@ -10,31 +10,37 @@ import {
   UseGuards,
   UseInterceptors,
   ClassSerializerInterceptor,
+  NotFoundException,
+  Logger,
+  Res,
 } from '@nestjs/common';
 import { AppUsersService } from './app-users.service';
 import CreateAppUserDto from './dto/requests/create-app-user.dto';
-import AppUser from './entities/app-user.entity';
 import { UpdateAppUserDto } from './dto/requests/update-app-user.dto';
 import { CreateContactInfoDto } from './dto/requests/create-contact-info.dto';
-import { ApiBearerAuth } from '@nestjs/swagger';
+import { ApiBearerAuth, ApiProperty } from '@nestjs/swagger';
 import { AuthGuard } from '@nestjs/passport';
 import { HasRoles } from 'src/auth/has-roles.decorator';
 import { RoleType } from './entities/role.entity';
 import { RolesGuard } from 'src/auth/roles.guard';
-
+import { GetAppUserWithTeam } from './dto/responses/get-app-user-with-team.dto';
+import { Response } from 'express';
+class Username {
+  @ApiProperty()
+  username: string;
+}
 @Controller('appUsers')
 export class AppUsersController {
   constructor(private readonly appUsersService: AppUsersService) {}
 
   @Post()
-  async create(@Body() createAppUserDto: CreateAppUserDto) {
-    try {
-      return await this.appUsersService.create(createAppUserDto);
-    } catch (er) {
-      return {
-        errorMessage: `Something went wrong with ${er}`,
-      };
-    }
+  async create(
+    @Body() createAppUserDto: CreateAppUserDto,
+    @Res() response: Response,
+  ) {
+    response.status(HttpStatus.CREATED).send({
+      result: await this.appUsersService.create(createAppUserDto),
+    });
   }
 
   @HasRoles(RoleType.Admin)
@@ -42,20 +48,25 @@ export class AppUsersController {
   @ApiBearerAuth()
   @UseInterceptors(ClassSerializerInterceptor)
   @Get()
-  async findAll() {
-    return await this.appUsersService.findAll();
+  async findAll(@Res() response: Response) {
+    response
+      .status(HttpStatus.OK)
+      .send({ result: await this.appUsersService.findAll() });
   }
 
   @UseInterceptors(ClassSerializerInterceptor)
   @Get(':id')
-  async findOne(@Param('id') id: string) {
-    const result: AppUser | string = await this.appUsersService.findOne(+id);
-    const status: HttpStatus =
-      typeof result == 'string' ? HttpStatus.NOT_FOUND : HttpStatus.OK;
-    return {
-      status: status,
-      response: result,
-    };
+  async findOne(@Param('id') id: string, @Res() response: Response) {
+    response.status(HttpStatus.OK).send({
+      result: await this.appUsersService.findOne(+id),
+    });
+  }
+  @UseInterceptors(ClassSerializerInterceptor)
+  @Get(':teamMemberId/teams')
+  async findWithTeam(@Param('teamMemberId') teamMemberId: string) {
+    const result: GetAppUserWithTeam[] | NotFoundException =
+      await this.appUsersService.getTeamMemberInfo(+teamMemberId);
+    return result;
   }
 
   @Patch(':id')
@@ -89,6 +100,16 @@ export class AppUsersController {
     return `${status} ${result}`;
   }
 
+  // Warning⚠️: That endpoint codded for an example of SQL Injection problem
+  @Post('all')
+  async GetAppUserWithUsernameSQLInjectable(@Body() username: Username) {
+    const result =
+      await this.appUsersService.selectAllWithSQLInjection('OR 1=1-- ');
+    Logger.warn('!!!⚠️sql injection problem⚠️!!!', result);
+    return await this.appUsersService.selectAllWithSQLInjection(
+      username.username,
+    );
+  }
   @Delete(':id')
   async remove(@Param('id') id: string) {
     return await this.appUsersService.softDelete(+id);

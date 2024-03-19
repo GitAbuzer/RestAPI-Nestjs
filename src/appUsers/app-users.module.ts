@@ -12,6 +12,7 @@ import { AppUsersService } from './app-users.service';
 import { MailerService } from 'src/mailer/mailer.service';
 import { ProducerService } from 'src/queues/producer.file';
 import { QueuesModule } from 'src/queues/queues.module';
+import { GetAppUserWithTeam } from './dto/responses/get-app-user-with-team.dto';
 
 @Module({
   controllers: [AppUsersController],
@@ -26,6 +27,7 @@ import { QueuesModule } from 'src/queues/queues.module';
       ContactInfo,
       Task,
       Team,
+      GetAppUserWithTeam,
     ]),
   ],
 })
