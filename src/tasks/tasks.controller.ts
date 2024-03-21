@@ -22,13 +22,10 @@ export class TasksController {
   constructor(private readonly tasksService: TasksService) {}
 
   @Post()
-  async create(
-    @Body() createTaskDto: CreateTaskDto,
-    @Res() res: Response,
-  ) {
+  async create(@Body() createTaskDto: CreateTaskDto, @Res() res: Response) {
     const response: Response = res.status(HttpStatus.CREATED).send({
       result: await this.tasksService.create(createTaskDto),
-    }); 
+    });
     return response;
   }
 
@@ -40,12 +37,12 @@ export class TasksController {
   @Get('getBy')
   async findAllByWorkerId(
     @Query() params: TaskQueryParamsDto,
-    @Res() res: Response
+    @Res() res: Response,
   ) {
     const result: Task[] | NotFoundException = params.workerId
       ? await this.tasksService.findByWorkerId(params.workerId)
       : await this.tasksService.findByTeam(params.teamId);
-    return typeof result;
+    res.send(result);
   }
 
   @Get(':id')

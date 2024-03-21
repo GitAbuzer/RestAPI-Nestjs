@@ -23,10 +23,10 @@ export class TeamsController {
   @Post()
   async create(
     @Body() createTeamDto: CreateTeamDto,
-    @Res() response: Response, 
+    @Res() response: Response,
   ) {
     response.status(HttpStatus.CREATED).send({
-      result: await this.teamsService.create(createTeamDto)
+      result: await this.teamsService.create(createTeamDto),
     });
   }
 
@@ -34,7 +34,7 @@ export class TeamsController {
   @Get()
   async findAll(@Res() response: Response) {
     response.status(HttpStatus.OK).send({
-      response: await this.teamsService.findAll()
+      response: await this.teamsService.findAll(),
     });
   }
 
@@ -49,9 +49,9 @@ export class TeamsController {
 
   @Patch(':id/update')
   async update(
-    @Param('id') id: number, 
+    @Param('id') id: number,
     @Body() updateTeamDto: UpdateTeamDto,
-    @Res() response: Response, 
+    @Res() response: Response,
   ) {
     const result: string = await this.teamsService.update(id, updateTeamDto);
     const status: HttpStatus = result.includes('wrong')
@@ -59,24 +59,24 @@ export class TeamsController {
       : HttpStatus.OK;
     response.status(status).send({ response: result });
   }
-  
+
   @Patch(':id/addMembers')
   async addMembers(
     @Param('id') id: number,
     @Body() selectedAppUsers: number[],
-    @Res() response: Response, 
+    @Res() response: Response,
   ) {
-      const result: Team = await this.teamsService.addNewMembersInTeam(
-        id,
-        selectedAppUsers,
-        );
-      response.status(HttpStatus.CREATED).send({ response: result });
+    const result: Team = await this.teamsService.addNewMembersInTeam(
+      id,
+      selectedAppUsers,
+    );
+    response.status(HttpStatus.CREATED).send({ response: result });
   }
 
   @Delete(':id/remove')
   async remove(@Param('id') id: number, @Res() response: Response) {
     response.status(HttpStatus.OK).send({
-      result: await this.teamsService.remove(id)
+      result: await this.teamsService.remove(id),
     });
   }
 }

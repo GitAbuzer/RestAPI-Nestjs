@@ -65,7 +65,7 @@ export class AppUsersController {
   @Get(':teamMemberId/teams')
   async findWithTeam(
     @Param('teamMemberId') teamMemberId: string,
-    @Res() response: Response,  
+    @Res() response: Response,
   ) {
     const result: GetAppUserWithTeam[] | NotFoundException =
       await this.appUsersService.getTeamMemberInfo(+teamMemberId);
@@ -105,22 +105,28 @@ export class AppUsersController {
       ? HttpStatus.INTERNAL_SERVER_ERROR
       : HttpStatus.OK;
     response.status(status).send({
-      result: result
+      result: result,
     });
   }
 
   // Warning⚠️: That endpoint codded for an example of SQL Injection problem
   @Post('all')
   async GetAppUserWithUsernameSQLInjectable(@Body() username: Username) {
-    const result =
-      await this.appUsersService.selectAllWithSQLInjection('OR 1=1-- ');
-    Logger.warn('!!!⚠️sql injection problem⚠️!!!', result);
+    Logger.warn('!!!⚠️sql injection problem⚠️!!!');
     return await this.appUsersService.selectAllWithSQLInjection(
       username.username,
     );
   }
   @Delete(':id')
-  async remove(@Param('id') id: string) {
+  async softDelete(@Param('id') id: string) {
     return await this.appUsersService.softDelete(+id);
+  }
+
+  @HasRoles(RoleType.Admin)
+  @UseGuards(AuthGuard('jwt'), RolesGuard)
+  @ApiBearerAuth()
+  @Delete(':id/hardDelete')
+  async remove(@Param('id') id: string) {
+    return await this.appUsersService.hardDelete(+id);
   }
 }

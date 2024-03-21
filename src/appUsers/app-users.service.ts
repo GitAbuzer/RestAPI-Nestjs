@@ -37,10 +37,14 @@ export class AppUsersService {
   ) {}
 
   async create(createAppUserDto: CreateAppUserDto): Promise<object | any> {
-    if (await this.appUserRepository.exists({
-      where: { username: createAppUserDto.username },
-    }))
-    throw new ConflictException(`${createAppUserDto.username} has already exists!`);
+    if (
+      await this.appUserRepository.exists({
+        where: { username: createAppUserDto.username },
+      })
+    )
+      throw new ConflictException(
+        `${createAppUserDto.username} has already exists!`,
+      );
     const sha256Password = createHash('sha256')
       .update(createAppUserDto.password)
       .digest('base64');
@@ -64,7 +68,6 @@ export class AppUsersService {
         success: false,
       });
 
-
     const result: AppUser = await this.appUserRepository.save(createAppUserDto);
     await this.addContactInfoOnUser(createAppUserDto.contactInfos, result);
     await this.addRoleOnUser(createAppUserDto.roles, result);
@@ -72,7 +75,7 @@ export class AppUsersService {
       createAppUserDto.contactInfos,
       result,
     );
-    //await this.addWelcomeEmailOnQueue(mailBody);
+    await this.addWelcomeEmailOnQueue(mailBody);
     return {
       message: `${result.username} is created successfully!`,
       appUserId: `${result.id}`,
@@ -140,16 +143,17 @@ export class AppUsersService {
     id: number,
     createContactInfoDto: CreateContactInfoDto,
   ) {
-    if (this.contactInfoRepository.existsBy({
-      info: createContactInfoDto.info,
-    }))
+    if (
+      this.contactInfoRepository.existsBy({
+        info: createContactInfoDto.info,
+      })
+    )
       throw new ConflictException({
-        message: `there is a contact info already exist with ${createContactInfoDto.info}`
+        message: `there is a contact info already exist with ${createContactInfoDto.info}`,
       });
     const createContactInfoDtos: CreateContactInfoDto[] = [];
     createContactInfoDtos.push(createContactInfoDto);
     const appUser: AppUser = await this.appUserRepository.findOneBy({ id });
-    const contactInfo: ContactInfo = new ContactInfo();
     return await this.addContactInfoOnUser(createContactInfoDtos, appUser);
   }
 
@@ -171,6 +175,14 @@ export class AppUsersService {
     appUser.isActive = false;
     this.appUserRepository.save(appUser);
     return `This action soft deleted a #${id} AppUser`;
+  }
+
+  async hardDelete(id: number) {
+    await this.customAppUserRepositorySql.query(
+      'CALL hard_delete_app_user($1)',
+      [id],
+    );
+    return `This action hard deleted a #${id} AppUser`;
   }
 
   async addContactInfoOnUser(
